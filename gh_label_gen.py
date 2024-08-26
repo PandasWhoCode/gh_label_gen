@@ -13,9 +13,9 @@ def gen_label_script(name:str, description:str, color:str, repo_list:list[str], 
 
     print("Generating the Issue Gen shell script")
 
-    command:str = "gh label create " + name + " --repo [REPO] --description \"" + description + "\" --color " + color
+    command:str = "gh label create " + name + " --repo [REPO] --description \"" + description + "\" --color \"" + color + "\""
     if force:
-        command:str = "gh label create " + name + " --repo [REPO] --description \"" + description + "\" --color " + color + " --force"
+        command:str = "gh label create \"" + name + "\" --repo [REPO] --description \"" + description + "\" --color \"" + color + "\" --force"
     
     cmd_list:list[str] = []
 
