@@ -44,10 +44,11 @@ def parse_audit_args() -> tuple[str,str]:
     from os.path import exists as path_exists # just need to check if os.path.exists() returns true for the audit file
 
     parser = argparse.ArgumentParser(description="Generate a script that will create several github labels across the repositories in the specified label_list.")
-    parser.add_argument("-f","--csv-file",dest="csv_file",type=str,help="The csv file which specifies all required repositories for the new label")
+    parser.add_argument("-r","--repo-csv-file",dest="csv_file",type=str,help="The csv file which specifies all required repositories for the new label")
     parser.add_argument("-d","--description",dest="description",type=str,help="Description for the label")
     parser.add_argument("-n","--name",dest="name",type=str,help="The name for the label")
     parser.add_argument("-c","--color",dest="color",type=str,help="The color code for the label (defined here: https://www.notion.so/swirldslabs/Issue-Management-db25f4d0789044d9addaa196fe10c9aa)")
+    parser.add_argument("-f","--force",dest="force",action='store_true',help="Tell the script to force the push of the label if it exists.")
     args = parser.parse_args()
 
     if args.csv_file is None or args.csv_file == "":
@@ -66,7 +67,11 @@ def parse_audit_args() -> tuple[str,str]:
     if args.description is not None:
         description = args.description
 
-    return args.csv_file, args.name, description, args.color
+    force:bool = False
+    if args.force:
+        force = True
+
+    return args.csv_file, args.name, description, args.color, force
 
 def main():
     try:
@@ -74,9 +79,10 @@ def main():
         name:str = ""
         description:str = ""
         color:str = ""
-        csv_name, name, description, color = parse_audit_args()
+        force:bool = False
+        csv_name, name, description, color, force = parse_audit_args()
         repo_list:list[str] = parse_csv(csv=csv_name)
-        gen_label_script(name=name, description=description, color=color, repo_list=repo_list)
+        gen_label_script(name=name, description=description, color=color, repo_list=repo_list,force=force)
 
     except Exception as e:
         print(e)
