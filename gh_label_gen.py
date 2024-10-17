@@ -8,6 +8,36 @@ def parse_csv(csv:str) -> list[str]:
             repos.append(line.strip().replace(",","/"))
     return repos
 
+def gen_topic_script(name:str, repo_list:list[str]):
+    from os import chmod
+    
+    print("Generating the Topic Gen shell script")
+
+    command:str = "gh repo edit [REPO] --add-topic " + name
+
+    cmd_list:list[str] = []
+
+    try:
+        for repo in repo_list:
+            cmd:str = command.replace("[REPO]",repo)
+            cmd_list.append(cmd)
+        
+        topic_script:str = "topic_gen.sh"
+        with open(topic_script,"w") as script:
+            for line in cmd_list:
+                line += "\n"
+                print(line)
+                script.write(line)
+                script.write("sleep 2\n") # need sleep 2 for gh api to be happy
+        
+        print("Generation comlete. chmod to 755 to enable execution of the script")
+        chmod(topic_script,0o755)
+    
+    except Exception as e:
+        raise e
+    
+    print("Complete.")
+
 def gen_label_script(name:str, description:str, color:str, repo_list:list[str], force:bool=False):
     from os import chmod
 
@@ -46,8 +76,9 @@ def parse_audit_args() -> tuple[str,str]:
     parser = argparse.ArgumentParser(description="Generate a script that will create several github labels across the repositories in the specified label_list.")
     parser.add_argument("-r","--repo-csv-file",dest="csv_file",type=str,help="The csv file which specifies all required repositories for the new label")
     parser.add_argument("-d","--description",dest="description",type=str,help="Description for the label")
-    parser.add_argument("-n","--name",dest="name",type=str,help="The name for the label")
+    parser.add_argument("-n","--name",dest="name",type=str,help="The name for the label/topic")
     parser.add_argument("-c","--color",dest="color",type=str,help="The color code for the label (defined here: https://www.notion.so/swirldslabs/Issue-Management-db25f4d0789044d9addaa196fe10c9aa)")
+    parser.add_argument("-t","--topics",dest="topics",action='store_true',help="Tell the script to generate topics instead of labels.")
     parser.add_argument("-f","--force",dest="force",action='store_true',help="Tell the script to force the push of the label if it exists.")
     args = parser.parse_args()
 
@@ -58,9 +89,9 @@ def parse_audit_args() -> tuple[str,str]:
         raise RuntimeError("The specified csv_file does not exist or is not valid")
     
     if args.name is None or args.name == "":
-        raise RuntimeError("No label name specified")
+        raise RuntimeError("No label/topic name specified")
     
-    if args.color is None or args.color == "":
+    if not args.topics and (args.color is None or args.color == ""):
         raise RuntimeError("Must specify the color for the issue (defined here: https://www.notion.so/swirldslabs/Issue-Management-db25f4d0789044d9addaa196fe10c9aa)")
     
     description:str = ""
@@ -70,8 +101,12 @@ def parse_audit_args() -> tuple[str,str]:
     force:bool = False
     if args.force:
         force = True
+    
+    topics:bool = False
+    if args.topics:
+        topics = True
 
-    return args.csv_file, args.name, description, args.color, force
+    return args.csv_file, args.name, description, args.color, force, topics
 
 def main():
     try:
@@ -80,9 +115,13 @@ def main():
         description:str = ""
         color:str = ""
         force:bool = False
-        csv_name, name, description, color, force = parse_audit_args()
+        topics:bool = False
+        csv_name, name, description, color, force, topics = parse_audit_args()
         repo_list:list[str] = parse_csv(csv=csv_name)
-        gen_label_script(name=name, description=description, color=color, repo_list=repo_list,force=force)
+        if topics == True:
+            gen_topic_script(name=name, repo_list=repo_list)
+        else:
+            gen_label_script(name=name, description=description, color=color, repo_list=repo_list,force=force)
 
     except Exception as e:
         print(e)
