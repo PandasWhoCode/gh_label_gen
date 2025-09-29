@@ -3,7 +3,7 @@ if ! command -v gh &> /dev/null; then
   echo "gh command could not be found, please install GitHub CLI."
   exit 1
 fi
-echo "here0"
+
 # Use getopts to parse options
 # Options include target, owner, append (flag)
 TARGET="repo_list.csv"
@@ -19,7 +19,6 @@ while getopts "t:o:a" opt; do
   esac
 done
 
-echo "here1"
 # Validate required parameters
 if [[ -z "$OWNER" ]]; then
   echo "Owner is required. Use -o to specify the owner."
@@ -27,18 +26,14 @@ if [[ -z "$OWNER" ]]; then
   exit 1
 fi
 
-echo "here2"
 # ensure target file exists or create it
 if [[ ! -f "$TARGET" ]]; then
   touch "$TARGET"
 fi
 
-echo "here3"
 # Create repo csv using gh cli
 if [[ $APPEND -eq 1 ]]; then
   gh repo list "${OWNER}" --json owner,name | jq -r '.[] | .owner.login + "," + .name' >> "${TARGET}"
-  echo "here4"
 else
   gh repo list "${OWNER}" --json owner,name | jq -r '.[] | .owner.login + "," + .name' > "${TARGET}"
-  echo "here5"
 fi
