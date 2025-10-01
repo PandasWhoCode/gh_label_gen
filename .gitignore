@@ -1,4 +1,5 @@
 label_gen.sh
+label_edit.sh
 topic_gen.sh
-repos.csv
+*.csv
 .idea/
